@@ -82,7 +82,7 @@ int Thread::join()
     if(this->_state != FINISHING){ 
         Thread * prev = running();
         prev->_state = WAITING;
-        waiting_join->insert(&prev->_link);
+        waiting_join.insert(&prev->_link);
 
         _running = _ready.remove()->object();
         _running->_state = RUNNING;
