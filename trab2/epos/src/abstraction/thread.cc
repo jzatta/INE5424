@@ -73,13 +73,13 @@ Thread::~Thread()
 int Thread::join()
 {
     lock();
-
     db<Thread>(TRC) << "Thread::join(this=" << this << ",state=" << _state << ")" << endl;
 
-    while(_ready.empty())
-        idle();
-
-    if(this->_state != FINISHING){ 
+    if(this->_state != FINISHING) {
+        while(_ready.empty())
+            idle();
+        lock();
+        
         Thread * prev = running();
         prev->_state = WAITING;
         waiting_join.insert(&prev->_link);
@@ -178,14 +178,21 @@ void Thread::yield()
 
 void Thread::exit(int status)
 {
+    Queue *this_waiting_join = &(_running->waiting_join);
     lock();
 
     db<Thread>(TRC) << "Thread::exit(status=" << status << ") [running=" << running() << "]" << endl;
 
-    while(_ready.empty() && !_suspended.empty())
+    while(_ready.empty() && !_suspended.empty() && this_waiting_join->empty())
         idle(); // implicit unlock();
 
     lock();
+
+    while (!this_waiting_join->empty()) {
+        Thread * joinedThread = this_waiting_join->remove()->object();
+        joinedThread->_state = READY;
+        _ready.insert(&joinedThread->_link);
+    }
 
     if(!_ready.empty()) {
         Thread * prev = _running;
