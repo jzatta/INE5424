@@ -76,9 +76,19 @@ int Thread::join()
 
     db<Thread>(TRC) << "Thread::join(this=" << this << ",state=" << _state << ")" << endl;
 
-    while(_state != FINISHING)
-        yield(); // implicit unlock()
+    while(_ready.empty())
+        idle();
 
+    if(this->_state != FINISHING){ 
+        Thread * prev = running();
+        prev->_state = WAITING;
+        waiting_join->insert(&prev->_link);
+
+        _running = _ready.remove()->object();
+        _running->_state = RUNNING;
+
+        dispatch(prev, _running);
+    }
     unlock();
 
     return *reinterpret_cast<int *>(_stack);
