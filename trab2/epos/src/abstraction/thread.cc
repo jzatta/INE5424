@@ -73,13 +73,13 @@ Thread::~Thread()
 int Thread::join()
 {
     lock();
-    db<Thread>(TRC) << "Thread::join(this=" << this << ",state=" << _state << ")" << endl;
-
-    if(this->_state != FINISHING) {
-        while(_ready.empty())
-            idle();
+    while(_ready.empty() && this->_state != FINISHING) {
+        idle();
         lock();
-        
+    }
+    //lock();
+    db<Thread>(TRC) << "Thread::join(this=" << this << ",state=" << _state << ")" << endl;
+    if(this->_state != FINISHING) {
         Thread * prev = running();
         prev->_state = WAITING;
         waiting_join.insert(&prev->_link);
