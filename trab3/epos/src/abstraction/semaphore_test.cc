@@ -54,8 +54,15 @@ int philosopher(int n, int l, int c)
     return iterations;
 }
 
+int idleThread(void) {
+    while (1) {
+        Thread::idle();
+    }
+}
+
 int main()
 {
+    Thread(Thread::Configuration(READY,LOW), &idleThread);
     table.lock();
     Display::clear();
     Display::position(0, 0);
