@@ -105,6 +105,7 @@ protected:
 
 private:
     static void init();
+    static int  idleThread();
 
 protected:
     char * _stack;
